@@ -1,0 +1,6 @@
+[package]
+name = "csvtxs"
+version = "0.1.0"
+authors = ["Andrew Jones <ascjones@gmail.com>"]
+
+[dependencies]
