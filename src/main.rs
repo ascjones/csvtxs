@@ -25,12 +25,22 @@ fn readcsv(date_fmt: &str) -> Result<Vec<Transaction>, Box<Error>> {
         }).collect()
 }
 
-fn main() {
-    let date_fmt = "%d/%m/%Y";
-    let txs = readcsv(&date_fmt).unwrap();
+fn write_txs(account: &str, txs: Vec<Transaction>) -> Result<(), Box<Error>> {
     for tx in txs {
-        println!("{:?}", tx);
+        println!("{} * {}", tx.date, tx.description);
+        println!("    {} £{:.2}", account, tx.amount);
+        println!("");
     }
+    Ok(())
+}
+
+fn main() {
+    // options to be passed in
+    let date_fmt = "%d/%m/%Y";
+    let account = "Liabilities:Amex";
+
+    let txs = readcsv(&date_fmt).unwrap();
+    write_txs(&account, txs);
     // if let Err(err) = readcsv(&date_fmt) {
     //     println!("error running readcsv: {}", err);
     //     process::exit(1);
