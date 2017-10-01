@@ -13,25 +13,28 @@ struct Transaction {
     description: String,
 }
 
-fn readcsv(date_fmt: &str) -> Result<(), Box<Error>> {
+fn readcsv(date_fmt: &str) -> Result<Vec<Transaction>, Box<Error>> {
     let mut rdr = csv::Reader::from_reader(io::stdin());
-    for result in rdr.records() {
-        let record = result?;
-        let date = NaiveDate::parse_from_str(&record[0], date_fmt);
-        let amount: f32 = record[2].trim().parse()?;
-        let description = record[3].to_string();
-        let tx = Transaction { date : date?, amount : amount, description : description };
-        println!("{:?}", tx);
-    }
-    Ok(())
+    rdr.records()
+        .map(|result| {
+            let record = result?;
+            let date = NaiveDate::parse_from_str(&record[0], date_fmt);
+            let amount: f32 = record[2].trim().parse()?;
+            let description = record[3].to_string();
+            Ok(Transaction { date : date?, amount : amount, description : description })
+        }).collect()
 }
 
 fn main() {
     let date_fmt = "%d/%m/%Y";
-    if let Err(err) = readcsv(&date_fmt) {
-        println!("error running readcsv: {}", err);
-        process::exit(1);
+    let txs = readcsv(&date_fmt).unwrap();
+    for tx in txs {
+        println!("{:?}", tx);
     }
+    // if let Err(err) = readcsv(&date_fmt) {
+    //     println!("error running readcsv: {}", err);
+    //     process::exit(1);
+    // }
 }
 
 #[cfg(test)]
