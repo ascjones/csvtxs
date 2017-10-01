@@ -1,20 +1,28 @@
 extern crate csv;
+extern crate chrono;
 
 use std::error::Error;
 use std::io;
 use std::process;
+use chrono::{NaiveDate};
 
-fn readcsv() -> Result<(), Box<Error>> {
+struct Transaction {
+    date: String
+}
+
+fn readcsv(date_fmt: &str) -> Result<(), Box<Error>> {
     let mut rdr = csv::Reader::from_reader(io::stdin());
     for result in rdr.records() {
         let record = result?;
-        println!("{:?}", record);
+        let date = NaiveDate::parse_from_str(&record[0], date_fmt);
+        println!("date {:?}", date);
     }
     Ok(())
 }
 
 fn main() {
-    if let Err(err) = readcsv() {
+    let date_fmt = "%d/%m/%Y";
+    if let Err(err) = readcsv(&date_fmt) {
         println!("error running readcsv: {}", err);
         process::exit(1);
     }
