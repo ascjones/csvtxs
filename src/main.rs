@@ -6,8 +6,10 @@ use std::io;
 use std::process;
 use chrono::{NaiveDate};
 
+#[derive(Debug)]
 struct Transaction {
-    date: String
+    date: NaiveDate,
+    amount: f32,
 }
 
 fn readcsv(date_fmt: &str) -> Result<(), Box<Error>> {
@@ -15,7 +17,9 @@ fn readcsv(date_fmt: &str) -> Result<(), Box<Error>> {
     for result in rdr.records() {
         let record = result?;
         let date = NaiveDate::parse_from_str(&record[0], date_fmt);
-        println!("date {:?}", date);
+        let amount: f32 = record[2].trim().parse()?;
+        let tx = Transaction { date : date?, amount : amount };
+        println!("{:?}", tx);
     }
     Ok(())
 }
