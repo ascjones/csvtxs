@@ -46,9 +46,8 @@ fn readcsv(date_fmt: &str) -> Result<Vec<Transaction>, Box<Error>> {
 }
 
 impl MatchingRules {
-    fn match_transaction(&self, tx: &Transaction) -> &Option<&Rule> {
-        let rule = &self.rules.iter().find(|rule| rule.description == tx.description);
-        rule
+    fn match_transaction(&self, tx: &Transaction) -> Option<&Rule> {
+        self.rules.iter().find(|&rule| rule.description == tx.description)
     }
 }
 
@@ -92,8 +91,8 @@ fn main() {
                     LedgerTransaction { 
                         date : tx.date,
                         amount : tx.amount,
-                        description : tx.description, 
-                        account : r.account 
+                        description : tx.description.to_owned(), 
+                        account : r.account.to_owned() 
                     }
                 })
             }).collect();
