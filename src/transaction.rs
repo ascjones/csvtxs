@@ -23,10 +23,6 @@ impl Transaction {
             account : None
         }
     }
-
-    pub fn categorize(&mut self, account: &str) {
-        self.account = Some(account.to_string())
-    }
 }
 
 pub fn read_txs(date_fmt: &str) -> Result<Vec<Transaction>, Box<Error>> {

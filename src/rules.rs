@@ -21,22 +21,14 @@ impl MatchingRules {
         }
     }
 
-    pub fn match_transaction(&self, tx: &Transaction) -> Option<&Rule> {
-        self.rules.iter().find(|&rule| rule.description == tx.description)
-    }
-
-    pub fn match_transactions(&self, txs: Vec<Transaction>) -> Vec<&Transaction> {
-        let tx_rules =
-            txs.into_iter()
-                .map (|tx| {
-                    let rule = self.rules.iter().find(|&rule| rule.description == tx.description);
-                    (tx, rule)
-                });
-
-        let matched =
-            tx_rules.filter_map(|(tx, rule)| 
-                rule.map(|r| tx.categorize(&r.account))).collect();
-        matched
+    pub fn match_transactions(&self, txs: Vec<Transaction>) -> Vec<Transaction> {
+        txs.into_iter()
+            .filter_map (|tx| {
+                self.rules.iter()
+                    .find(|rule| rule.description == tx.description)
+                    // todo: how to use record update syntax here
+                    .map(|r| Transaction { account: Some(r.account.to_string()), date: tx.date, amount: tx.amount, description: tx.description.to_string() })
+            }).collect()
     }
 }
 
