@@ -3,15 +3,18 @@ extern crate chrono;
 
 use std::error::Error;
 use std::io;
-use std::process;
 use chrono::{NaiveDate};
 
 #[derive(Debug)]
 pub struct Transaction {
     pub date: NaiveDate,
     pub amount: f32,
-    pub description: String,
-    pub account: Option<String>
+    pub description: String
+}
+
+pub struct CategorisedTransaction {
+    pub transaction: Transaction,
+    pub account: String
 }
 
 impl Transaction {
@@ -19,8 +22,7 @@ impl Transaction {
         Transaction { 
             date : date,
             amount : amount,
-            description : description.to_owned(), 
-            account : None
+            description : description.to_owned()
         }
     }
 }
@@ -37,12 +39,11 @@ pub fn read_txs(date_fmt: &str) -> Result<Vec<Transaction>, Box<Error>> {
         }).collect()
 }
 
-pub fn write_txs(account: &str, default_account2: &str, txs: Vec<Transaction>) -> Result<(), Box<Error>> {
+pub fn write_txs(account: &str  , txs: Vec<CategorisedTransaction>) -> Result<(), Box<Error>> {
     for tx in txs {
-        let account2 = tx.account.unwrap_or(default_account2.to_owned());
-        println!("{} * {}", tx.date, tx.description);
-        println!("    {} £{:.2}", account2, tx.amount);
-        println!("    {} £-{:.2}", account, tx.amount);
+        println!("{} * {}", tx.transaction.date, tx.transaction.description);
+        println!("    {} £{:.2}", tx.account, tx.transaction.amount);
+        println!("    {} £-{:.2}", account, tx.transaction.amount);
         println!("");
     }
     Ok(())

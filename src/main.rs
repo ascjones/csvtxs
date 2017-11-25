@@ -4,18 +4,17 @@ extern crate chrono;
 mod transaction;
 mod rules;
 
-use std::error::Error;
-use std::io;
-use std::process;
-use chrono::{NaiveDate};
-use transaction::{Transaction, read_txs, write_txs};
-use rules::{MatchingRules, Rule};
+// use std::error::Error;
+// use std::io;
+// use std::process;
+use transaction::{read_txs, write_txs};
+use rules::{MatchingRules};
 
 fn main() {
     // options to be passed in
     let date_fmt = "%d/%m/%Y";
     let account = "Liabilities:Amex";
-    let default_account2 = "Expenses:Unknown";
+    // let default_account2 = "Expenses:Unknown";
     
     let rules = MatchingRules::read();
 
@@ -25,7 +24,7 @@ fn main() {
 
     // todo: unmatched
 
-    write_txs(&account, &default_account2, matched);
+    write_txs(&account, matched).unwrap()
     // if let Err(err) = readcsv(&date_fmt) {
     //     println!("error running readcsv: {}", err);
     //     process::exit(1);
