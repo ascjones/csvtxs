@@ -39,7 +39,7 @@ pub fn read_txs(date_fmt: &str) -> Result<Vec<Transaction>, Box<Error>> {
         }).collect()
 }
 
-pub fn write_txs(account: &str  , txs: Vec<CategorisedTransaction>) -> Result<(), Box<Error>> {
+pub fn write_txs(account: &str, txs: Vec<CategorisedTransaction>) -> Result<(), Box<Error>> {
     for tx in txs {
         println!("{} * {}", tx.transaction.date, tx.transaction.description);
         println!("    {} £{:.2}", tx.account, tx.transaction.amount);

@@ -4,8 +4,7 @@ extern crate chrono;
 mod transaction;
 mod rules;
 
-// use std::error::Error;
-// use std::io;
+use std::fs::{File};
 // use std::process;
 use transaction::{read_txs, write_txs};
 use rules::{MatchingRules};
@@ -14,9 +13,10 @@ fn main() {
     // options to be passed in
     let date_fmt = "%d/%m/%Y";
     let account = "Liabilities:Amex";
+    let rules_csv = File::open("rules.csv").unwrap(); // env::current_dir().unwrap();
     // let default_account2 = "Expenses:Unknown";
     
-    let rules = MatchingRules::read();
+    let rules = MatchingRules::read_csv(rules_csv).unwrap();
 
     let txs = read_txs(&date_fmt).unwrap();
     
