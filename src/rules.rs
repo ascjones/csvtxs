@@ -3,14 +3,15 @@ extern crate csv;
 use std::error::Error;
 use transaction::{Transaction, CategorisedTransaction};
 use std::io::{Read};
+use regex::Regex;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct Rule {
-    description: String,
+    description: Regex,
     account: String,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct MatchingRules {
     rules: Vec<Rule>
 }
@@ -25,7 +26,7 @@ impl MatchingRules {
                 .map(|result| {
                     result.map(|record| {
                         Rule {
-                            description: record[0].to_string(),
+                            description: Regex::new(&record[0]).unwrap(),
                             account: record[1].to_string()
                         }
                     }).map_err(From::from)
@@ -34,18 +35,24 @@ impl MatchingRules {
     }
 
     pub fn match_transactions(&self, txs: Vec<Transaction>) -> Vec<CategorisedTransaction> {
+        // let rules_with_regex =
+        //     self.rules.into_iter()
+        //         .map (|rule| (rule, Regex::new(&rule.description.to_string()).unwrap()));
         txs.into_iter()
             .filter_map (|tx| {
                 self.rules.iter()
-                    .find(|rule| rule.description == tx.description)
-                    .map(|r| CategorisedTransaction { transaction: tx, account: r.account.to_string() })
+                    .find(|rule| rule.description.is_match(&tx.description))
+                    .map(|rule| CategorisedTransaction { transaction: tx, account: rule.account.to_string() })
             }).collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use rules::{MatchingRules, Rule};
+    use chrono::{NaiveDate};
+    use rules::{MatchingRules};
+    use transaction::{read_txs, Transaction, CategorisedTransaction};
+    use currency::Currency;
 
     #[test]
     fn read_rule_from_csv() {
@@ -53,12 +60,29 @@ mod tests {
 description,account
 AMAZON,Expenses:Amazon";
         let rules = MatchingRules::read_csv(rules_csv.as_bytes()).unwrap();
-        let expected_rule = 
-            Rule {
-                description: "AMAZON".to_string(),
-                account: "Expenses:Amazon".to_string()
-            };
-        assert_eq!(rules.rules[0], expected_rule);
+        assert_eq!(format!("{}", rules.rules[0].description), "AMAZON".to_string());
+        assert_eq!(rules.rules[0].account, "Expenses:Amazon".to_string());
+    }
+
+    #[test]
+    fn rule_matches_description_with_regex() {
+        let rules_csv = "\
+date, account
+AMAZ.*,Expenses:Amazon"; 
+        let txs_csv = "\
+date,,amount,description
+10/12/2017,,10.00,PURCHASE FROM AMAZON";
+        let rules = MatchingRules::read_csv(rules_csv.as_bytes()).unwrap();
+        let txs = read_txs("%d/%m/%Y", txs_csv.as_bytes()).unwrap();
+        let matched = rules.match_transactions(txs);
+        assert_eq!(matched, vec! [CategorisedTransaction {
+            transaction: Transaction {
+                date: NaiveDate::from_ymd(2017, 12, 10),
+                amount: Currency::from_str("10.00").unwrap(),
+                description: "PURCHASE FROM AMAZON".to_string()
+            },
+            account: "Expenses:Amazon".to_string()
+        }]);
     }
 }
 

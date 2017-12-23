@@ -1,5 +1,7 @@
 extern crate csv;
 extern crate chrono;
+extern crate currency;
+extern crate regex;
 
 mod transaction;
 mod rules;
@@ -18,7 +20,7 @@ fn main() {
     
     let rules = MatchingRules::read_csv(rules_csv).unwrap();
 
-    let txs = read_txs(&date_fmt).unwrap();
+    let txs = read_txs(&date_fmt, std::io::stdin()).unwrap();
     
     let matched = rules.match_transactions(txs);
 
