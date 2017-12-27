@@ -34,16 +34,19 @@ impl MatchingRules {
         rules.map(|rs| { MatchingRules { rules: rs } })
     }
 
-    pub fn match_transactions(&self, txs: Vec<Transaction>) -> Vec<CategorisedTransaction> {
-        // let rules_with_regex =
-        //     self.rules.into_iter()
-        //         .map (|rule| (rule, Regex::new(&rule.description.to_string()).unwrap()));
-        txs.into_iter()
-            .filter_map (|tx| {
-                self.rules.iter()
-                    .find(|rule| rule.description.is_match(&tx.description))
-                    .map(|rule| CategorisedTransaction { transaction: tx, account: rule.account.to_string() })
-            }).collect()
+    pub fn match_transactions(&self, txs: Vec<Transaction>) -> (Vec<CategorisedTransaction>, Vec<Transaction>) {
+        let mut categorised: Vec<CategorisedTransaction> = Vec::new();
+        let mut uncategorised: Vec<Transaction> = Vec::new();
+        for tx in txs {
+            let rule = self.rules.iter().find(|rule| rule.description.is_match(&tx.description));
+            match rule {
+                Some (r) => 
+                    categorised.push(CategorisedTransaction { transaction: tx, account: r.account.to_string() }),
+                None =>
+                    uncategorised.push(tx)
+            }
+        }
+        (categorised, uncategorised)
     }
 }
 
@@ -74,7 +77,7 @@ date,,amount,description
 10/12/2017,,10.00,PURCHASE FROM AMAZON";
         let rules = MatchingRules::read_csv(rules_csv.as_bytes()).unwrap();
         let txs = read_txs("%d/%m/%Y", txs_csv.as_bytes()).unwrap();
-        let matched = rules.match_transactions(txs);
+        let (matched, _) = rules.match_transactions(txs);
         assert_eq!(matched, vec! [CategorisedTransaction {
             transaction: Transaction {
                 date: NaiveDate::from_ymd(2017, 12, 10),
