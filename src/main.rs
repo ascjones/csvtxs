@@ -1,18 +1,45 @@
 extern crate csv;
 extern crate chrono;
 extern crate currency;
+extern crate docopt;
 extern crate regex;
+extern crate serde;
+
+#[macro_use]
+extern crate serde_derive;
 
 mod transaction;
 mod rules;
 
+use std::{env};
 use std::fs::{File};
-use std::io;
-// use std::process;
+use std::io::{Read};
+
+use docopt::Docopt;
 use transaction::{read_txs, write_txs};
 use rules::{MatchingRules, Rule};
 
+pub const USAGE: &'static str = r#"
+csvtxs: convert csv transactions into ledger compatible transactions
+
+Usage:
+    csvtxs <csvfile>
+
+Options:
+    -h, --help              Display this message and exit.
+"#;
+
+#[derive(Debug, Deserialize)]
+struct Args {
+    flag_file: String,
+}
+
 fn main() {
+    let command = env::args();
+
+    let args: Args = Docopt::new(USAGE)
+        .and_then(|d| d.argv(command).deserialize()).expect("args error");
+        
     // options to be passed in
     let date_fmt = "%d/%m/%Y";
     let account = "Liabilities:Amex";
@@ -21,7 +48,8 @@ fn main() {
     
     let rules = MatchingRules::read_csv(rules_csv).unwrap();
 
-    let txs = read_txs(&date_fmt, std::io::stdin()).unwrap();
+    let txs_csv = File::open(args.flag_file).expect("CSV file open error");
+    let txs = read_txs(&date_fmt, txs_csv).unwrap();
     
     let (matched, unmatched) = rules.match_transactions(txs);
 
@@ -37,7 +65,7 @@ fn main() {
             let mut account = String::new();
             println!("Enter account:");
 
-            io::stdin().read_line(&mut account)
+            std::io::stdin().read_line(&mut account)
                 .expect("Failed to read line");
 
             println!("The accound you entered was: {}", account);
