@@ -2,12 +2,14 @@
 name = "csvtxs"
 version = "0.1.0"
 authors = ["Andrew Jones <ascjones@gmail.com>"]
+edition = "2021"
 
 [dependencies]
-docopt = "0.8"
+color-eyre = "0.5.11"
 serde = "1.0"
 serde_derive = "1.0"
-csv = "1.0.0-beta.4"
+structopt = "0.3.25"
+csv = "1.1.6"
 chrono = "0.4.0"
 currency = "0.4.0"
 regex = "0.2"
