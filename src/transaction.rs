@@ -2,6 +2,8 @@ use chrono::NaiveDate;
 use currency::Currency;
 use std::io::Read;
 
+use crate::config::CsvImports;
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct Transaction {
     pub date: NaiveDate,
@@ -25,17 +27,18 @@ impl Transaction {
     }
 }
 
-pub fn read_txs<R>(date_fmt: &str, reader: R) -> color_eyre::Result<Vec<Transaction>>
+pub fn read_txs<R>(import_config: &CsvImports, reader: R) -> color_eyre::Result<Vec<Transaction>>
 where
     R: Read,
 {
+    let cols = &import_config.columns;
     let mut rdr = csv::Reader::from_reader(reader);
     rdr.records()
         .map(|result| {
             let record = result?;
-            let date = NaiveDate::parse_from_str(&record[0], date_fmt);
-            let amount = Currency::from_str(record[2].trim()).unwrap();
-            let description = record[3].to_string();
+            let date = NaiveDate::parse_from_str(&record[cols.date], &import_config.date_format);
+            let amount = Currency::from_str(record[cols.amount].trim()).unwrap();
+            let description = record[cols.description].to_string();
             Ok(Transaction::new(date?, amount, &description))
         })
         .collect()

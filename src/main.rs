@@ -1,32 +1,47 @@
+mod config;
 mod rules;
 mod transaction;
 
-use std::fs::File;
+use color_eyre::eyre::{self, WrapErr};
+use std::collections::HashMap;
+use std::{fs, path::PathBuf};
 use structopt::StructOpt;
 
+use config::Config;
 use rules::{MatchingRules, Rule};
 use transaction::{read_txs, write_txs};
 
 #[derive(Debug, StructOpt)]
 struct Args {
-    file: String,
+    /// CSV file to import
+    #[structopt(parse(from_os_str))]
+    file: PathBuf,
+    /// Config file
+    #[structopt(long, parse(from_os_str), default_value = "csvtxs.toml")]
+    config: PathBuf,
+    /// CSV import config
+    #[structopt(long)]
+    csv: String,
 }
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    let args = Args::from_args();
+    let args: Args = Args::from_args();
 
-    // options to be passed in
-    let date_fmt = "%d/%m/%Y";
-    let account = "Liabilities:Amex";
-    let rules_csv = File::open("rules.csv").unwrap(); // env::current_dir().unwrap();
-                                                      // let default_account2 = "Expenses:Unknown";
+    let config_file = fs::read(args.config).context("Error opening config file")?;
+    let config: Config = toml::from_slice(&config_file)?;
 
-    let rules = MatchingRules::read_csv(rules_csv).unwrap();
+    let csv_configs = config.csv.unwrap_or(HashMap::new());
+    let csv_config = csv_configs
+        .get(&args.csv)
+        .ok_or_else(|| eyre::eyre!("No csv config '{}' found", args.csv))?;
 
-    let txs_csv = File::open(args.file).expect("CSV file open error");
-    let txs = read_txs(&date_fmt, txs_csv).unwrap();
+    let rule_entries = config.rules.unwrap_or(Vec::new());
+    let rules = MatchingRules::from_config(&rule_entries)?;
+
+    let txs_csv = fs::File::open(args.file).context("Error opening CSV file")?;
+    let txs = read_txs(&csv_config, txs_csv)?;
 
     let (matched, unmatched) = rules.match_transactions(txs);
 
@@ -62,7 +77,7 @@ fn main() -> color_eyre::Result<()> {
     // todo: tab automcomplete accounts (from rules?)
     // todo: write new rules once finished (give summary and option to cancel)
 
-    write_txs(&account, matched)
+    write_txs(&csv_config.account, matched)
     // if let Err(err) = readcsv(&date_fmt) {
     //     println!("error running readcsv: {}", err);
     //     process::exit(1);
